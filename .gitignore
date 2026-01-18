@@ -12,5 +12,3 @@ config/secret/
 .vscode/
 target/
 
-.gitignore
-.Readme
