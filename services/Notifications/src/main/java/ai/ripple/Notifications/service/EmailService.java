@@ -33,4 +33,16 @@ public class EmailService {
                "\nIt is valid for 5 minutes.\n\n" +
                "If you did not request this, please ignore this email.\n\nThanks!";
     }
+
+    public Mono<Object> sendNotification(String toEmail, String subject, String messageBody) {
+        return Mono.fromRunnable(() -> {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(messageBody);
+            message.setFrom("shakyashivam4510@gmail.com");
+
+            mailSender.send(message);
+        }).subscribeOn(Schedulers.boundedElastic());
+    }
 }

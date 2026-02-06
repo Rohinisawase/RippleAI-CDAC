@@ -1,5 +1,6 @@
 package ai.ripple.UserService.auth.Controller;
 
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -7,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,13 +39,12 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
-    
- 
-   @PostMapping("/register")
+
+    @PostMapping("/register")
     public ResponseEntity<?> register(@ModelAttribute AccountRegisterDTO dto) {
 
         if (accountRepository.existsByEmail(dto.getEmail())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
+            return ResponseEntity.status(HttpStatus.CONFLICT) //409
                     .body("Email already registered");
         }
 
@@ -66,11 +67,10 @@ public class AuthController {
         return ResponseEntity.ok("User registered successfully");
     }
 
-
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
+        // Now RuntimeException will be handled by GlobalExceptionHandler
         Account account = accountRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -78,18 +78,38 @@ public class AuthController {
             throw new RuntimeException("Invalid credentials");
         }
 
-        String token = jwtUtil.generateToken(account.getEmail(),account.getRole());
-        
+        String token = jwtUtil.generateToken(
+                account.getAccountId(),
+                account.getEmail(),
+                account.getRole());
+
         ResponseCookie cookie = ResponseCookie.from("jwt", token)
-                .httpOnly(true)        
-                .secure(false)          // true in production with HTTPS
-                .path("/")              // cookie valid for entire domain
-                .maxAge(86400)          // 1 day in seconds
-                .sameSite("Strict")     // prevents CSRF in modern browsers
+                .httpOnly(true)
+                .secure(false) //dev
+                .path("/")
+                .maxAge(86400)
+                .sameSite("None")
                 .build();
-        
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new JwtResponse(token));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+
+        // Clear the JWT cookie by setting it empty and expiring it
+        ResponseCookie cookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)          // cookie not accessible in JS
+                .secure(false)            // only over HTTPS in production
+                .path("/")               // valid for entire domain
+                .maxAge(0)               // expires immediately
+                .sameSite("None")        // allow cross-site for frontend on different domain
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("status", "logged out"));
     }
 }

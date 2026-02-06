@@ -2,6 +2,7 @@ package ai.ripple.Notifications.controller;
 
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,9 +11,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import ai.ripple.Notifications.service.OtpService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 import java.time.Duration;
 
+@Slf4j
 @RestController
 @RequestMapping("/notification")
 @RequiredArgsConstructor
@@ -39,6 +42,9 @@ public class OtpController {
             @RequestParam String purpose,
             @RequestParam String otp) {
 
+
+        log.info("info",email + purpose + otp);
+
         return otpService.verifyOtp(email, purpose, otp)
                 .map(valid -> ResponseEntity.ok("OTP verified successfully"))
                 .onErrorResume(e ->
@@ -46,6 +52,7 @@ public class OtpController {
                 );
     }
 
+    //debugging
     @GetMapping("/set")
     public Mono<String> setKey(
             @RequestParam String key,

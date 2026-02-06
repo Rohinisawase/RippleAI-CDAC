@@ -21,17 +21,17 @@ public class JwtUtil {
     private String SECRET;
 
     private SecretKey getSigningKey() {
-        // Convert your string secret to a SecretKey safely
         return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String email, Role role) {
+    public String generateToken(Long userId, String email, Role role) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("userId", userId)
                 .claim("role", role.name())
-                .setIssuedAt(new Date()) // current time
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256) // correct usage
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -42,5 +42,4 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
-
 }

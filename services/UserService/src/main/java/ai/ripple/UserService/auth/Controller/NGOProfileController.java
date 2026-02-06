@@ -1,6 +1,180 @@
 package ai.ripple.UserService.auth.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import ai.ripple.UserService.auth.Dto.PasswordUpdateDTO;
+import ai.ripple.UserService.auth.Dto.UpdateNGOProfileDTO;
+import ai.ripple.UserService.auth.Dto.VerificationDocumentDTO;
+import ai.ripple.UserService.auth.Entity.Account;
+import ai.ripple.UserService.auth.Entity.Verification;
+import ai.ripple.UserService.auth.Entity.VerificationStatus;
+import ai.ripple.UserService.auth.FileStorage.FileStorage;
+import ai.ripple.UserService.auth.Repository.AccountRepository;
+import ai.ripple.UserService.auth.Repository.VerificationRepository;
+
+import java.util.List;
+
+
+@RestController
+@RequestMapping("/auth/ngo/profile")
+public class NGOProfileController {
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Autowired
+    private VerificationRepository verificationRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private FileStorage fileStorageService;
+
+    // =====================================================
+    // GET NGO PROFILE
+    // =====================================================
+    @GetMapping
+    public ResponseEntity<Account> getProfile(
+            @RequestAttribute("userId") String userId
+    ) {
+        Account ngo = accountRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("NGO not found"));
+        return ResponseEntity.ok(ngo);
+    }
+
+    // =====================================================
+    // UPDATE NGO PROFILE (name, phone, address, reg number)
+    // =====================================================
+    @PutMapping
+    public ResponseEntity<Account> updateProfile(
+            @RequestAttribute("userId") String userId,
+            @RequestBody UpdateNGOProfileDTO dto
+    ) {
+        Account ngo = accountRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("NGO not found"));
+
+        if (dto.getName() != null) ngo.setName(dto.getName());
+        if (dto.getPhone() != null) ngo.setPhone(dto.getPhone());
+        if (dto.getAddress() != null) ngo.setAddress(dto.getAddress());
+        if (dto.getRegistrationNumber() != null)
+            ngo.setRegistrationNumber(dto.getRegistrationNumber());
+
+        return ResponseEntity.ok(accountRepository.save(ngo));
+    }
+
+    // =====================================================
+    // SUBMIT / UPDATE VERIFICATION DOCUMENTS
+    // =====================================================
+    @PutMapping("/documents")
+    public ResponseEntity<String> updateDocuments(
+            @RequestAttribute("userId") String userId,
+            @RequestBody VerificationDocumentDTO dto
+    ) {
+        Account ngo = accountRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("NGO not found"));
+
+        List<Verification> existing =
+                verificationRepository.findByNgoAndStatusNot(
+                        ngo, VerificationStatus.Rejected
+                );
+
+        Verification verification = existing.isEmpty()
+                ? new Verification()
+                : existing.get(0);
+
+        verification.setNgo(ngo);
+        verification.setSubmittedDocs(dto.getSubmittedDocs());
+        verification.setStatus(VerificationStatus.Pending);
+
+        verificationRepository.save(verification);
+
+        return ResponseEntity.ok("Documents submitted successfully");
+    }
+
+    // =====================================================
+    // GET VERIFICATION STATUS
+    // =====================================================
+    @GetMapping("/verification")
+    public ResponseEntity<?> getVerificationStatus(
+            @RequestAttribute("userId") String userId
+    ) {
+        Account ngo = accountRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("NGO not found"));
+
+        List<Verification> records = verificationRepository.findByNgo(ngo);
+
+        return records.isEmpty()
+                ? ResponseEntity.ok("No verification records found")
+                : ResponseEntity.ok(records);
+    }
+
+    // =====================================================
+    // UPDATE PROFILE PHOTO
+    // =====================================================
+    @PostMapping("/photo")
+    public ResponseEntity<Account> updateProfilePhoto(
+            @RequestAttribute("userId") String userId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Account ngo = accountRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("NGO not found"));
+
+        String fileUrl = fileStorageService.uploadFile(
+                file,
+                "ripple/profile_photos"
+        );
+
+        ngo.setProfilePhotoUrl(fileUrl);
+        return ResponseEntity.ok(accountRepository.save(ngo));
+    }
+
+    // =====================================================
+    // UPDATE PASSWORD
+    // =====================================================
+    @PutMapping("/password")
+    public ResponseEntity<String> updatePassword(
+            @RequestAttribute("userId") String userId,
+            @RequestBody PasswordUpdateDTO dto
+    ) {
+        Account ngo = accountRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new RuntimeException("NGO not found"));
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), ngo.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Old password incorrect");
+        }
+
+        ngo.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        accountRepository.save(ngo);
+
+        return ResponseEntity.ok("Password updated successfully");
+    }
+
+    // =====================================================
+    // DELETE NGO ACCOUNT
+    // =====================================================
+    @DeleteMapping
+    public ResponseEntity<String> deleteAccount(
+            @RequestAttribute("userId") String userId
+    ) {
+        accountRepository.deleteById(Long.valueOf(userId));
+        return ResponseEntity.ok("NGO account deleted successfully");
+    }
+}
+
+/*
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -146,3 +320,6 @@ public class NGOProfileController {
         return ResponseEntity.ok("NGO account deleted successfully");
     }
 }
+
+
+*/

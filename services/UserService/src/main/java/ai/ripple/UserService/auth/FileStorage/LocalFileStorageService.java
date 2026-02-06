@@ -29,7 +29,7 @@ public class LocalFileStorageService implements FileStorage {
             Path filePath = dirPath.resolve(filename);
             Files.write(filePath, file.getBytes());
 
-            return uploadDir + folder + "/" + filename;
+            return "/uploads" + folder + "/" + filename;    // changed 
 
         } catch (IOException e) {
             throw new RuntimeException("Local upload failed", e);

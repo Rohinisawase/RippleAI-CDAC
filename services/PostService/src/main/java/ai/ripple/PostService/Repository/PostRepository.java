@@ -2,6 +2,7 @@ package ai.ripple.PostService.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
@@ -13,6 +14,10 @@ import ai.ripple.PostService.Entity.PostStatus;
 @Repository
 public interface PostRepository extends MongoRepository<Post, String> {
 
+ // In PostRepository
+    Optional<Post> findByPostId(String postId);
+
+
     List<Post> findAllByIdIn(List<String> ids);
 
     List<Post> findByOwnerIdAndOwnerType(String ownerId, OwnerType ownerType);
@@ -23,8 +28,17 @@ public interface PostRepository extends MongoRepository<Post, String> {
 
     void deleteByCampaignId(String campaignId);
 
+    void deleteByPostId(String postId);
+
+
     List<Post> findByStatusAndScheduledAtBefore(
             PostStatus status,
             LocalDateTime time
+    );
+
+    List<Post> findByOwnerIdAndCampaignIdAndStatus(
+            String ownerId,
+            String campaignId,
+            PostStatus status
     );
 }

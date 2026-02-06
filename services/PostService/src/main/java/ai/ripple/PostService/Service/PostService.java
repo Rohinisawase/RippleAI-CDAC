@@ -59,14 +59,26 @@ public class PostService {
         );
     }
 
+    public List<Post> getApprovedPostsByNgoAndCampaign(String ngoId, String campaignId) {
+        return postRepository.findByOwnerIdAndCampaignIdAndStatus(
+                ngoId,
+                campaignId,
+                PostStatus.SCHEDULED
+        );
+    }
+
+    public Post getPostByPostId(String postId) {
+        return postRepository.findByPostId(postId).orElse(null);
+    }
+
     // Delete post
-    public boolean deletePost(String id) {
-        if (!postRepository.existsById(id)) {
-            return false;
-        }
-        postRepository.deleteById(id);
+    public boolean deletePost(String postId) {
+        Post post = getPostByPostId(postId);
+        if (post == null) return false;
+        postRepository.deleteByPostId(postId);
         return true;
     }
+
 
     // Delete all posts under a campaign
     public boolean deletePostsByCampaign(String campaignId) {
