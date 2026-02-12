@@ -60,6 +60,37 @@ The integrated AI assistant helps create, manage, and optimize posts while maint
 * **Gamification**: Ranking and reward systems to motivate high-quality content creation and promote healthy social behavior.
 
 ---
+## 📸 Application Screenshots
+
+### 🔹 Select Account Type
+![Select Type](frontend/public/screenshots/select_type.jpeg)
+
+### 🔹 User Registration
+![User Registration](frontend/public/screenshots/register_user.jpeg)
+
+### 🔹 NGO Registration
+![NGO Registration](frontend/public/screenshots/register_ngo.jpeg)
+
+### 🔹 Login Page
+![Login Page](frontend/public/screenshots/login_page.jpeg)
+
+### 🔹 Forgot Password
+![Forgot Password](frontend/public/screenshots/forgot_password.jpeg)
+
+### 🔹 OTP Verification
+![OTP Verification](frontend/public/screenshots/otp_verification.jpeg)
+
+### 🔹 Start Campaign
+![Start Campaign](frontend/public/screenshots/start_campaign.jpeg)
+
+### 🔹 Generate Campaign (AI)
+![Generate Campaign](frontend/public/screenshots/generate_campaign.jpeg)
+
+### 🔹 NGO Manage Campaign
+![NGO Manage Campaign](frontend/public/screenshots/ngo_manage_campaign.jpeg)
+
+### 🔹 Delete Account
+![Delete Account](frontend/public/screenshots/delete_account.jpeg)
 
 ## Getting Started
 
